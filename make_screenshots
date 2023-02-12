@@ -1,0 +1,58 @@
+#!/bin/bash
+#<?php '
+[ ';
+$w = 1024;
+$h = 768;
+
+$sh = imagecreatefrompng("screenshot.png");
+if (imagecolorat($sh, 890, 408) === 12566463) {
+	echo "SKIP";
+} else {
+	$cropped = imagecrop($sh, ["x" => 856, "y" => 372, "width" => $w, "height" => $h]);
+	imagepng($cropped, "screenshot.png");
+	imagedestroy($cropped);
+	echo sha1_file("screenshot.png");
+}
+imagedestroy($sh);
+__halt_compiler();
+' ]
+
+TH_COUNT=0
+PREVSUM=
+THRESHOLD=20
+PAUSE=2
+
+osascript -e 'activate application "Safari"'
+sleep 1
+rm -f screenshot-*.png
+
+for (( i = 1;; i++ )); do
+	screencapture screenshot.png
+	SUM=$(php $0)
+
+	echo -n "$i: $SUM, "
+
+	if [ "$SUM" != "SKIP" ]; then
+		if [ "$SUM" = "$PREVSUM" ]; then
+			((TH_COUNT++))
+			if [ "$TH_COUNT" -gt "$THRESHOLD" ]; then
+				rm screenshot.png
+				echo finished
+				exit
+			fi
+			echo skipping
+		else
+			TH_COUNT=0
+			PREVSUM="$SUM"
+			NEWNAME=screenshot-$(printf "%03d" "$i").png
+			mv screenshot.png "$NEWNAME"
+			echo "screenshot.png → $NEWNAME"
+		fi
+		PAUSE=2
+	else
+		PAUSE=5
+	fi
+
+	cliclick m:800,630 w:200 c:. w:200 m:+100,+100
+	sleep $PAUSE
+done

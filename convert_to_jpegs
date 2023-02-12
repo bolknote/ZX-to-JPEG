@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+
+$w = 1024;
+$h = 768;
+
+$files = glob('screenshot-*.png', GLOB_NOSORT);
+sort($files);
+
+if (!$files) {
+	exit(1);
+}
+
+$total = count($files);
+$max_total = intdiv(65535, $h);
+sort($files);
+
+echo "Total: $total\n";
+
+if ($total > $max_total) {
+	$cnt = (int) ceil($total / (65535 / $h));
+	$step = intdiv($total, $cnt);
+
+	$tail = $files;
+
+	for ($i = 0; $i < $cnt; $i++) {
+		$out["out_$i.jpg"] = array_slice($tail, 0, $step);
+		$tail = array_slice($tail, $step);
+	}
+} else {
+	$out['out.jpg'] = $files;
+}
+
+foreach ($out as $filename => $files) {
+	$result = imagecreatetruecolor($w, $h * count($files));
+
+	foreach ($files as $i => $file) {
+		$cropped = imagecreatefrompng($file);
+		imagecopy($result, $cropped, 0, $i * $h, 0, 0, $w, $h);
+		imagedestroy($cropped);
+	}
+
+	imagejpeg($result, $filename, 29);
+	imagedestroy($result);
+}
