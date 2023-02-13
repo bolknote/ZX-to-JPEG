@@ -32,7 +32,7 @@ for (( i = 1;; i++ )); do
 
 	echo -n "$i: $SUM, "
 
-	if [ "$SUM" != "SKIP" ]; then
+	if [ "$SUM" != "#SKIP" ]; then
 		if [ "$SUM" = "$PREVSUM" ]; then
 			((TH_COUNT++))
 			if [ "$TH_COUNT" -gt "$THRESHOLD" ]; then
